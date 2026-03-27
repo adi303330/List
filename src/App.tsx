@@ -1,11 +1,25 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { initialRoutine, DayRoutine } from './data';
 import { CheckCircle, Circle, AlertCircle, Flame } from 'lucide-react';
 import { motion } from 'motion/react';
 
 export default function App() {
-  const [routines, setRoutines] = useState<DayRoutine[]>(initialRoutine);
-  const [streak, setStreak] = useState(0);
+  const [routines, setRoutines] = useState<DayRoutine[]>(() => {
+    const saved = localStorage.getItem('routineTracker_routines');
+    return saved ? JSON.parse(saved) : initialRoutine;
+  });
+  const [streak, setStreak] = useState(() => {
+    const saved = localStorage.getItem('routineTracker_streak');
+    return saved ? JSON.parse(saved) : 0;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('routineTracker_routines', JSON.stringify(routines));
+  }, [routines]);
+
+  useEffect(() => {
+    localStorage.setItem('routineTracker_streak', JSON.stringify(streak));
+  }, [streak]);
 
   const toggleTask = (day: string, taskId: string) => {
     setRoutines(prev => prev.map(r => 
