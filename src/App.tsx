@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { initialRoutine, DayRoutine } from './data';
-import { CheckCircle, Circle, AlertCircle, Flame } from 'lucide-react';
+import { initialRoutine, DayRoutine, Task } from './data';
+import { CheckCircle, Circle, AlertCircle, Flame, Plus, Trash2 } from 'lucide-react';
 import { motion } from 'motion/react';
 
 export default function App() {
@@ -30,11 +30,36 @@ export default function App() {
     ));
   };
 
+  const addTask = (day: string) => {
+    const newTask: Task = {
+      id: Date.now().toString(),
+      time: '00:00',
+      description: 'New Task',
+      isCritical: false,
+      completed: false,
+    };
+    setRoutines(prev => prev.map(r => r.day === day ? { ...r, tasks: [...r.tasks, newTask] } : r));
+  };
+
+  const removeTask = (day: string, taskId: string) => {
+    setRoutines(prev => prev.map(r => r.day === day ? { ...r, tasks: r.tasks.filter(t => t.id !== taskId) } : r));
+  };
+
+  const editTask = (day: string, taskId: string, field: keyof Task, value: string | boolean) => {
+    setRoutines(prev => prev.map(r => 
+      r.day === day ? {
+        ...r,
+        tasks: r.tasks.map(t => t.id === taskId ? { ...t, [field]: value } : t)
+      } : r
+    ));
+  };
+
   const updateNotes = (day: string, notes: string) => {
     setRoutines(prev => prev.map(r => r.day === day ? { ...r, notes } : r));
   };
 
   const getProgress = (routine: DayRoutine) => {
+    if (routine.tasks.length === 0) return 0;
     const completed = routine.tasks.filter(t => t.completed).length;
     return Math.round((completed / routine.tasks.length) * 100);
   };
@@ -63,13 +88,26 @@ export default function App() {
                     <button onClick={() => toggleTask(routine.day, task.id)}>
                       {task.completed ? <CheckCircle className="text-green-500" /> : <Circle className="text-gray-400" />}
                     </button>
-                    <span className={`text-sm ${task.completed ? 'line-through text-gray-500' : ''}`}>
-                      {task.time} - {task.description}
-                      {task.isCritical && !task.completed && <AlertCircle className="inline ml-2 text-red-500 w-4 h-4" />}
-                    </span>
+                    <input 
+                      className="text-sm w-20 p-1 border rounded"
+                      value={task.time}
+                      onChange={(e) => editTask(routine.day, task.id, 'time', e.target.value)}
+                    />
+                    <input 
+                      className={`text-sm flex-grow p-1 border rounded ${task.completed ? 'line-through text-gray-500' : ''}`}
+                      value={task.description}
+                      onChange={(e) => editTask(routine.day, task.id, 'description', e.target.value)}
+                    />
+                    <button onClick={() => removeTask(routine.day, task.id)} className="text-red-500">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                    {task.isCritical && !task.completed && <AlertCircle className="text-red-500 w-4 h-4" />}
                   </li>
                 ))}
               </ul>
+              <button onClick={() => addTask(routine.day)} className="flex items-center gap-2 text-blue-600 text-sm font-medium mb-4">
+                <Plus className="w-4 h-4" /> Add Task
+              </button>
               <textarea 
                 className="w-full p-2 border rounded text-sm" 
                 placeholder="Notes..."
